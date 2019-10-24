@@ -1,0 +1,1 @@
+<%= "This is printed from an included file" %>
