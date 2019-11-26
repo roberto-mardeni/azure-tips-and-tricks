@@ -25,6 +25,9 @@
 .PARAMETER ServiceObjectiveName   
     Desired performance level {Basic, S0, S1, S2, P1, P2, P3}  
   
+.PARAMETER ConnectionName   
+    The name of the Automation Connection to connect to Azure
+
 .EXAMPLE   
     Set-AzureSqlSingleDbServiceObjective
         -ResourceGroup "myResourceGroup"
@@ -56,14 +59,11 @@ param
     [parameter(Mandatory = $true)]  
     [string] $ServiceObjectiveName,
 
-    # Indicates if the script will wait for the scale operation to complete
-    [parameter(Mandatory = $true)]  
-    [bool] $Wait = $true,
-
-    # Amount of time to wait for the scaling operation
-    [int] $WaitTimeout = 3600
+    # The name of the connection asset to use for connecting to Azure
+    [string] $ConnectionName = "AzureRunAsConnection"
 )
 
+[int]$WaitTimeout = 3600
 $ErrorActionPreference = "Stop"
 
 # Determines the scale operation name.
