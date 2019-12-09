@@ -1,0 +1,33 @@
+<!--
+    DESCRIPTION:
+    - This policy sample relies on a Named Value, must be named 'AllowedList'
+    - AllowedList is a comma delimited list of values to check against
+    - If the query string parameter 'id' is not one of the values in AllowedList, 
+      then a response is immediately returned with a 401 status code
+-->
+<policies>
+    <inbound>
+        <base />
+        <set-variable name="allowedList" value="{{AllowedList}}" />
+        <set-variable name="id" value="@(context.Request.Url.Query.GetValueOrDefault("id", ""))" />
+        <choose>
+            <when condition="@(!((string)context.Variables["allowedList"]).Split(',').Contains(context.Variables["id"]))">
+                <return-response>
+                    <set-status code="401" reason="Invalid Id" />
+                    <set-body>Invalid Id</set-body>
+                </return-response>
+            </when>
+        </choose>
+    </inbound>
+    <backend />
+    <outbound>
+        <base />
+        <set-body template="liquid">{
+                "id": "{{context.Variables["id"]}}",
+                "text": "This is a message with the value of the id {{context.Variables["id"]}}"
+            }</set-body>
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
