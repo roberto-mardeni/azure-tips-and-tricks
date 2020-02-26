@@ -1,0 +1,249 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccount1Name": {
+      "type": "string",
+      "defaultValue": "[concat('logicapp1demo', utcNow('yyyyMMdd'))]"
+    },
+    "storageAccount2Name": {
+      "type": "string",
+      "defaultValue": "[concat('logicapp2demo', utcNow('yyyyMMdd'))]"
+    },
+    "storageAccountAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS"
+    },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "StorageV2"
+    },
+    "storageAccountAccessTier": {
+      "type": "string",
+      "defaultValue": "Hot"
+    },
+    "storageAccountSupportsHttpsTrafficOnly": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "storageAccountLargeFileSharesState": {
+      "type": "string",
+      "defaultValue": "Disabled"
+    },
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "dynamicConnectionBasedOnHttpRequest"
+    }
+  },
+  "variables": {
+    "storage1connection": "[concat(parameters('storageAccount1Name'), 'conn')]",
+    "storage2connection": "[concat(parameters('storageAccount2Name'), 'conn')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('storageAccount1Name')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accessTier": "[parameters('storageAccountAccessTier')]",
+        "supportsHttpsTrafficOnly": "[parameters('storageAccountSupportsHttpsTrafficOnly')]",
+        "largeFileSharesState": "[parameters('storageAccountLargeFileSharesState')]"
+      },
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('storageAccountAccountType')]"
+      },
+      "kind": "[parameters('storageAccountKind')]",
+      "tags": {},
+      "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2018-03-01-preview",
+          "name": "[concat('default/', 'input')]",
+          "dependsOn": [
+            "[parameters('storageAccount1Name')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[parameters('storageAccount2Name')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accessTier": "[parameters('storageAccountAccessTier')]",
+        "supportsHttpsTrafficOnly": "[parameters('storageAccountSupportsHttpsTrafficOnly')]",
+        "largeFileSharesState": "[parameters('storageAccountLargeFileSharesState')]"
+      },
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('storageAccountAccountType')]"
+      },
+      "kind": "[parameters('storageAccountKind')]",
+      "tags": {},
+      "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2018-03-01-preview",
+          "name": "[concat('default/', 'input')]",
+          "dependsOn": [
+            "[parameters('storageAccount2Name')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[variables('storage1connection')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount1Name'))]"
+      ],
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'azureblob')]"
+        },
+        "displayName": "[variables('storage1connection')]",
+        "parameterValues": {
+          "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount1Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+          "accountName": "[parameters('storageAccount1Name')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[variables('storage2connection')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount2Name'))]"
+      ],
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'azureblob')]"
+        },
+        "displayName": "[variables('storage2connection')]",
+        "parameterValues": {
+          "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount2Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+          "accountName": "[parameters('storageAccount2Name')]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[parameters('logicAppName')]"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Create_blob": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@{parameters('$connections')[triggerBody()['connectionName']]['connectionId']}"
+                  }
+                },
+                "method": "post",
+                "body": "{ \"value\": \"a sample value\", \"connectionName\": \"@{triggerBody()['connectionName']}\", \"createdDate\": \"@{utcNow()}\" }",
+                "path": "/datasets/default/files",
+                "queries": {
+                  "folderPath": "/input",
+                  "name": "@variables('filename')",
+                  "queryParametersSingleEncoded": true
+                }
+              },
+              "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Initialize_variable": {
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "filename",
+                    "type": "string",
+                    "value": "@{concat('sample', utcNow('yyyyMMddHHmmss'), '.json')}"
+                  }
+                ]
+              },
+              "runAfter": {},
+              "type": "InitializeVariable"
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connectionName": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azureblob1": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', variables('storage1connection'))]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('storage1connection'))]",
+                "connectionName": "[variables('storage1connection')]"
+              },
+              "azureblob2": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', variables('storage2connection'))]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('storage2connection'))]",
+                "connectionName": "[variables('storage2connection')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('storage1connection'))]",
+        "[resourceId('Microsoft.Web/connections', variables('storage2connection'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "logicAppUrl": {
+      "type": "string",
+      "value": "[listCallbackUrl(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/manual'), '2016-06-01').value]"
+    }
+  }
+}

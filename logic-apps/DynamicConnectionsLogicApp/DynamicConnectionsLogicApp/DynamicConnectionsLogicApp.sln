@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "DynamicConnectionsLogicApp", "DynamicConnectionsLogicApp\DynamicConnectionsLogicApp.deployproj", "{4C2ED2F3-B4D1-4965-A977-B49746AB129C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4C2ED2F3-B4D1-4965-A977-B49746AB129C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C2ED2F3-B4D1-4965-A977-B49746AB129C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C2ED2F3-B4D1-4965-A977-B49746AB129C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C2ED2F3-B4D1-4965-A977-B49746AB129C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DE8B75B2-AE74-413C-9F24-E428BE1000AB}
+	EndGlobalSection
+EndGlobal
