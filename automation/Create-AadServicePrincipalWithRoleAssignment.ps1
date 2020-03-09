@@ -34,19 +34,19 @@ param
 
 $ErrorActionPreference = "Stop"
 
-$sp = Get-AzureRmADServicePrincipal -DisplayName $DisplayName
+$sp = Get-AzADServicePrincipal -DisplayName $DisplayName
 
 if ($sp -eq $null) {
-    New-AzureRmADServicePrincipal -DisplayName $DisplayName -SkipAssignment
-    $sp = Get-AzureRmADServicePrincipal -DisplayName $DisplayName
+    New-AzADServicePrincipal -DisplayName $DisplayName -SkipAssignment
+    $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
 } else {
     Write-Host "Service Principal $DisplayName already exists"
 }
 
-$roleAssignment = Get-AzureRmRoleAssignment -ResourceGroupName $ResourceGroupName -ObjectId $sp.Id -RoleDefinitionName $ResourceGroupRole
+$roleAssignment = Get-AzRoleAssignment -ResourceGroupName $ResourceGroupName -ObjectId $sp.Id -RoleDefinitionName $ResourceGroupRole
 
 if ($roleAssignment -eq $null) {
-    New-AzureRmRoleAssignment -ResourceGroupName $ResourceGroupName -ObjectId $sp.Id -RoleDefinitionName $ResourceGroupRole
+    New-AzRoleAssignment -ResourceGroupName $ResourceGroupName -ObjectId $sp.Id -RoleDefinitionName $ResourceGroupRole
     Write-Host "Role assignment added"
 } else {
     Write-Host "Role assignment already present"
