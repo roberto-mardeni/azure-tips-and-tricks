@@ -37,7 +37,16 @@ $ErrorActionPreference = "Stop"
 $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
 
 if ($sp -eq $null) {
-    New-AzADServicePrincipal -DisplayName $DisplayName -SkipAssignment
+    $sp = New-AzADServicePrincipal -DisplayName $DisplayName -SkipAssignment
+
+    # Will print out the details of the service principal, minus password
+    $sp
+
+    # Print out secret - NOT RECOMMENDED, SHOULD PLACE IN SECURE LOCATION
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($sp.Secret)
+    $secret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    Write-Host "Secret: $secret"
+
     $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
 
     # Wait for 5 seconds to wait for replication
