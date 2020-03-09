@@ -39,6 +39,9 @@ $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
 if ($sp -eq $null) {
     New-AzADServicePrincipal -DisplayName $DisplayName -SkipAssignment
     $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
+
+    # Wait for 5 seconds to wait for replication
+    Start-Sleep -Seconds 5
 } else {
     Write-Host "Service Principal $DisplayName already exists"
 }
