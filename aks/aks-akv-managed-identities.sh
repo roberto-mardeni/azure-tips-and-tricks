@@ -90,4 +90,9 @@ EOF
 kubectl apply -f SecretProviderClass.yaml
 kubectl apply -f podBindingDeployment.yaml
 
+# Validate the test pod deployed correctly
 kubectl describe pods nginx-secrets-store-inline
+
+# Validate the secrets are mounted
+kubectl exec nginx-secrets-store-inline -- ls /mnt/secrets-store/
+kubectl exec nginx-secrets-store-inline -- cat /mnt/secrets-store/MySecret
