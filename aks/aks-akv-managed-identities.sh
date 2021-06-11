@@ -68,8 +68,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: nginx-secrets-store-inline
-  labels:
-    aadpodidbinding: azure-pod-identity-binding-selector
 spec:
   containers:
     - name: nginx
